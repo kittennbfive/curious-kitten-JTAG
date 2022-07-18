@@ -1,0 +1,27 @@
+This is curious-kitten-JTAG version 1
+(c)2022 by kittennbfive
+AGPLv3+ and NO WARRANTY - USE AT YOUR OWN RISK!
+Please read the fine manual.
+
+command? channels 4
+number of channels set to 4
+
+command? ident
+channel state:
+0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 
+PU PU PD PU -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+Channels detected as inputs will always be treated as inputs.
+Channels with unidentified direction will not be overriden.
+
+command? override inputs yes
+Will override channels detected as inputs.
+
+command? jtag1
+searching...
+JTAG FOUND: tdi 0 tck 2 tms 3 tdo 1
+
+command? taps
+found 1 TAP(s)
+
+command? irlen
+length of IR is 8 bits
