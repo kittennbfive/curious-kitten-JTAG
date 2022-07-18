@@ -68,7 +68,7 @@ The code is in file `jtag.c`. I assume you are familiar with JTAG, if not please
 Well, i did not invent anything. There are several documented tools like mine on the internet and some really useful papers and presentations available. The basic idea is always to try all possible combinations of pins/channels while sending some valid instructions/data. Precisely my tool tries to set all TAP (there might be several chained!) in BYPASS-mode (luckely this command is standardised), then clock in some known pattern on TDI and watch if it comes back on TDO.
 #### Optimisations
 To make things faster my code will monitor all possible outputs of the DUT *at the same time*. This can dramatically speed up things. Also the specification for JTAG recommands (or is it even mandatory?) pullups on TDI and TMS, so there is an option in the code to only consider inputs of the DUT that have these pullups as candidates for TDI and TMS.
-#### searching with pin-wiggling enabled
+#### Searching with pin-wiggling enabled
 As i said there might be (are they actually?) some DUT that needs some inputs to be pulled high/low to enable JTAG (i would appreciate an example of a device if you know one). The current code allows you to specify the number of pins to be wiggled simultaneously (because trying all combinations on like 20 pins would take *ages* and is probably rarely if ever needed). It will then try all possible combinations on the number of specified channels while looking for JTAG on the remaining channels. To speed things up the AVR will not set pins that already have a pullup/down to high/low but skip the concerned combinations.
 
 ## Exploring the (hopefully) discovered interface
@@ -122,9 +122,9 @@ Set a channel that is configured / was detected as an output to low or high. Thi
 ### taps
 Get the number of TAP in the chain. Will only work if a JTAG-interface has been detected by the search-functions. If it reports 0 something is wrong, check everything and maybe try `jtag1 dontstop`, see above.
 ### irlen
-Get the length of the instruction register. Will only work if `taps` detected a single tap.
+Get the length of the instruction register. Will only work if `taps` detected a single TAP.
 ### drlen
-Get the lengths of the data registers for each instruction. Will only work if `taps` detected a single tap and `drlen` detected a valid length (!=0). **WARNING: This can REALLY mess up your DUT as it writes to every data register without knowing the effects! Use with great caution and - i say it again - at your own risk!**
+Get the lengths of the data registers for each instruction. Will only work if `taps` detected a single TAP and `drlen` detected a valid length (!=0). **WARNING: This can REALLY mess up your DUT as it writes to every data register without knowing the effects! Use with great caution and - i say it again - at your own risk!**
 
 ## Statistics
 ```
