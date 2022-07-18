@@ -1,6 +1,8 @@
 # curious-kitten-JTAG
   
 *Hey kitten, find the JTAG-interface!*  
+
+![picture of PCB](hardware.jpg)
   
 ## What is this?
 This is my version of the well-known [JTAGulator](http://www.grandideastudio.com/jtagulator/), made from scratch using different components and my own code. This repo does not (yet) contain a ready-to-use and proven tool, it is an early version and work in progress. I appreciate constructive feedback and testing, especially because i don't have a lot of targets to try my tool on.
