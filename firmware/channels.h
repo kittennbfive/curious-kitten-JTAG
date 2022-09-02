@@ -16,7 +16,7 @@ AGPLv3+ and NO WARRANTY!
 #define NB_CHANNELS_AVAILABLE 24 //do not change for current hardware
 
 //Workaround for crappy levelshifters with defective channels
-#define DEFEFCTIVE_CHANNELS 0
+#define DEFECTIVE_CHANNELS 0
 
 typedef enum
 {

@@ -21,7 +21,7 @@ AGPLv3+ and NO WARRANTY!
 channel_t channels[NB_CHANNELS_AVAILABLE];
 uint8_t nb_channels=0;
 
-#if DEFEFCTIVE_CHANNELS
+#if DEFECTIVE_CHANNELS
 const bool skip_defective_channels[NB_CHANNELS_AVAILABLE]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //from 0 to NB_CHANNELS_AVAILABLE-1, 1 means defective
 #endif
 
@@ -106,7 +106,7 @@ void cmd_channels(PROTOTYPE_ARGS_HANDLER) //1 arg //set number of channels
 	
 	printf_P(PSTR("number of channels set to %u"), nb_channels);
 
-#if DEFEFCTIVE_CHANNELS
+#if DEFECTIVE_CHANNELS
 	printf_P(PSTR("\r\nscanning for defective channels...\r\n")); 
 	uint8_t ch;
 	bool found=false;
