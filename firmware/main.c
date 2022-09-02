@@ -18,6 +18,8 @@
 /*
 This file is part of curious-kitten-JTAG.
 
+version 2 with levelshifter-support
+
 (c) 2022 by kittennbfive
 
 AGPLv3+ and NO WARRANTY!
@@ -55,7 +57,7 @@ int main(void)
 	
 	reset_channels();
 	
-	printf_P(PSTR("\r\n\r\nThis is curious-kitten-JTAG version 1\r\n(c)2022 by kittennbfive\r\nAGPLv3+ and NO WARRANTY - USE AT YOUR OWN RISK!\r\nPlease read the fine manual.\r\n\r\n"));
+	printf_P(PSTR("\r\n\r\nThis is curious-kitten-JTAG version 2\r\n(c)2022 by kittennbfive\r\nAGPLv3+ and NO WARRANTY - USE AT YOUR OWN RISK!\r\nPlease read the fine manual.\r\n\r\n"));
 	
 	printf_P(PSTR("command? "));
 	

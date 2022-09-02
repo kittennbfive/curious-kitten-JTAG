@@ -21,6 +21,12 @@ AGPLv3+ and NO WARRANTY!
 channel_t channels[NB_CHANNELS_AVAILABLE];
 uint8_t nb_channels=0;
 
+#if DEFEFCTIVE_CHANNELS
+const bool skip_defective_channels[NB_CHANNELS_AVAILABLE]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //from 0 to NB_CHANNELS_AVAILABLE-1, 1 means defective
+#endif
+
+static devicemode_t devmode=MODE_NORMAL;
+
 static bool override_inputs=false;
 static bool override_unknown=false;
 
@@ -38,6 +44,11 @@ void reset_channels(void)
 	nb_channels=0;
 	override_inputs=false;
 	override_unknown=false;
+}
+
+devicemode_t get_device_mode(void)
+{
+	return devmode;
 }
 
 bool get_override_inputs(void)
@@ -59,6 +70,27 @@ void cmd_reset(PROTOTYPE_ARGS_HANDLER) //0 args //reset everything
 	printf_P(PSTR("reset ok"));
 }
 
+void cmd_devmode(PROTOTYPE_ARGS_HANDLER)
+{
+	ARGS_HANDLER_UNUSED;
+	
+	char str_mode[SZ_BUFFER_ARGUMENTS];
+	strcpy(str_mode, get_next_argument());
+	
+	if(!strcmp(str_mode, "normal"))
+	{
+		devmode=MODE_NORMAL;
+		printf_P(PSTR("device mode set to normal"));
+	}
+	else if(!strcmp(str_mode, "shift"))
+	{
+		devmode=MODE_LEVELSHIFTER;
+		printf_P(PSTR("device mode set to levelshifter mode, some functions are unavailable"));
+	}
+	else
+		printf_P(PSTR("error: invalid mode"));
+}
+
 void cmd_channels(PROTOTYPE_ARGS_HANDLER) //1 arg //set number of channels
 {
 	ARGS_HANDLER_UNUSED;
@@ -73,11 +105,33 @@ void cmd_channels(PROTOTYPE_ARGS_HANDLER) //1 arg //set number of channels
 	}
 	
 	printf_P(PSTR("number of channels set to %u"), nb_channels);
+
+#if DEFEFCTIVE_CHANNELS
+	printf_P(PSTR("\r\nscanning for defective channels...\r\n")); 
+	uint8_t ch;
+	bool found=false;
+	for(ch=0; ch<nb_channels; ch++)
+	{
+		if(skip_defective_channels[ch])
+		{
+			found=true;
+			printf_P(PSTR("WARNING: channel %u marked as defective, will not be used!\r\n"), ch);
+		}
+	}
+	if(!found)
+		printf_P(PSTR("all used channels ok"));
+#endif
 }
 
 void cmd_setmode(PROTOTYPE_ARGS_HANDLER) //2 args //set channel state / override automatically detected state
 {
 	ARGS_HANDLER_UNUSED;
+
+	if(get_device_mode()==MODE_LEVELSHIFTER)
+	{
+		printf_P(PSTR("error: command unavailable in levelshifter mode"));
+		return;
+	}
 	
 	uint8_t ch=0;
 	char state[SZ_BUFFER_ARGUMENTS];
@@ -124,6 +178,12 @@ void cmd_setmode(PROTOTYPE_ARGS_HANDLER) //2 args //set channel state / override
 void cmd_override(PROTOTYPE_ARGS_HANDLER) //2 args
 {
 	ARGS_HANDLER_UNUSED;
+	
+	if(get_device_mode()==MODE_LEVELSHIFTER)
+	{
+		printf_P(PSTR("error: command unavailable in levelshifter mode"));
+		return;
+	}
 	
 	char type[SZ_BUFFER_ARGUMENTS];
 	char yesno[SZ_BUFFER_ARGUMENTS];

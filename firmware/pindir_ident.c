@@ -140,40 +140,51 @@ void identify_pin_directions(void)
 
 void print_pin_summary(void)
 {
-	printf_P(PSTR("channel state:\r\n"));
-	
-	uint8_t i;
-	for(i=0; i<NB_CHANNELS_AVAILABLE; i++)
-		printf_P(PSTR("%-2u "), i);
-	printf_P(PSTR("\r\n"));
-	for(i=0; i<NB_CHANNELS_AVAILABLE; i++)
+	if(get_device_mode()==MODE_NORMAL)
 	{
-		switch(channels[i].type)
+		printf_P(PSTR("channel state:\r\n"));
+		
+		uint8_t i;
+		for(i=0; i<NB_CHANNELS_AVAILABLE; i++)
+			printf_P(PSTR("%-2u "), i);
+		printf_P(PSTR("\r\n"));
+		for(i=0; i<NB_CHANNELS_AVAILABLE; i++)
 		{
-			case PIN_NOT_PROBED: printf_P(PSTR("--")); break;
-			case PIN_IDENT_FAILED: printf_P(PSTR("??")); break;
-			case PIN_CHANGING_VOLTAGE: printf_P(PSTR("a ")); break;
-			case PIN_DISABLED: printf_P(PSTR("d ")); break;
-			case PIN_INPUT_FLOATING: printf_P(PSTR("I ")); break;
-			case PIN_INPUT_PULLUP: printf_P(PSTR("PU")); break;
-			case PIN_INPUT_PULLDOWN: printf_P(PSTR("PD")); break;
-			case PIN_OUTPUT_OR_VCC_GND: printf_P(PSTR("O ")); break;
+			switch(channels[i].type)
+			{
+				case PIN_NOT_PROBED: printf_P(PSTR("--")); break;
+				case PIN_IDENT_FAILED: printf_P(PSTR("??")); break;
+				case PIN_CHANGING_VOLTAGE: printf_P(PSTR("a ")); break;
+				case PIN_DISABLED: printf_P(PSTR("d ")); break;
+				case PIN_INPUT_FLOATING: printf_P(PSTR("I ")); break;
+				case PIN_INPUT_PULLUP: printf_P(PSTR("PU")); break;
+				case PIN_INPUT_PULLDOWN: printf_P(PSTR("PD")); break;
+				case PIN_OUTPUT_OR_VCC_GND: printf_P(PSTR("O ")); break;
+			}
+			printf_P(PSTR(" "));
 		}
-		printf_P(PSTR(" "));
+		if(get_override_inputs())
+			printf_P(PSTR("\r\nChannels detected as inputs can be treated as outputs.\r\n"));
+		else
+			printf_P(PSTR("\r\nChannels detected as inputs will always be treated as inputs.\r\n"));
+		if(get_override_unknown())
+			printf_P(PSTR("Channels with unidentified direction can be overridden. Potentially dangerous!"));
+		else
+			printf_P(PSTR("Channels with unidentified direction will not be overriden."));
 	}
-	if(get_override_inputs())
-		printf_P(PSTR("\r\nChannels detected as inputs can be treated as outputs.\r\n"));
 	else
-		printf_P(PSTR("\r\nChannels detected as inputs will always be treated as inputs.\r\n"));
-	if(get_override_unknown())
-		printf_P(PSTR("Channels with unidentified direction can be overridden. Potentially dangerous!"));
-	else
-		printf_P(PSTR("Channels with unidentified direction will not be overriden."));
+		printf_P(PSTR("levelshifter mode - configured for %u channels"), nb_channels); 
 }
 
 void cmd_ident(PROTOTYPE_ARGS_HANDLER) //0 args
 {
 	ARGS_HANDLER_UNUSED;
+	
+	if(get_device_mode()==MODE_LEVELSHIFTER)
+	{
+		printf_P(PSTR("error: command unavailable in levelshifter mode"));
+		return;
+	}
 	
 	if(nb_channels==0)
 	{

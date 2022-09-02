@@ -35,6 +35,10 @@ uint8_t irlen=0;
 
 static bool tdo_pullup=false;
 
+#if DEFEFCTIVE_CHANNELS
+extern const bool skip_defective_channels[NB_CHANNELS_AVAILABLE]; //declared in channels.c
+#endif
+
 //TODO: add adjustable delay for slow DUT?
 static void clock_pulses(const uint8_t tck, uint16_t nb)
 {
@@ -100,6 +104,7 @@ bool find_jtag1(const bool ignore_if_pullup_missing, const bool dontstop, const 
 	
 	bool override_inputs=get_override_inputs();
 	bool override_unknown=get_override_unknown();
+	devicemode_t mode=get_device_mode();
 	
 	bool found=false;
 	
@@ -108,43 +113,69 @@ bool find_jtag1(const bool ignore_if_pullup_missing, const bool dontstop, const 
 	
 	for(tdi=0; tdi<nb_channels; tdi++)
 	{
+
+#if DEFEFCTIVE_CHANNELS
+		if(skip_defective_channels[tdi])
+			continue;
+#endif
+		
 		if(channels[tdi].pin_occupied)
 			continue;
 		
-		if(channels[tdi].type!=PIN_INPUT_FLOATING && channels[tdi].type!=PIN_INPUT_PULLUP && channels[tdi].type!=PIN_INPUT_PULLDOWN && !(channels[tdi].type==PIN_IDENT_FAILED && override_unknown))
-			continue;
+		if(mode==MODE_NORMAL)
+		{
+			if(channels[tdi].type!=PIN_INPUT_FLOATING && channels[tdi].type!=PIN_INPUT_PULLUP && channels[tdi].type!=PIN_INPUT_PULLDOWN && !(channels[tdi].type==PIN_IDENT_FAILED && override_unknown))
+				continue;
 		
-		if(ignore_if_pullup_missing && channels[tdi].type!=PIN_INPUT_PULLUP)
-			continue;
+			if(ignore_if_pullup_missing && channels[tdi].type!=PIN_INPUT_PULLUP)
+				continue;
+		}
 		
 		set_avr_pin_output(tdi, 1);
 		
 		for(tck=0; tck<nb_channels; tck++)
 		{
+
+#if DEFEFCTIVE_CHANNELS
+			if(skip_defective_channels[tck])
+				continue;
+#endif
+
 			if(tck==tdi)
 				continue;
 			
 			if(channels[tck].pin_occupied)
 				continue;
 			
-			if(channels[tck].type!=PIN_INPUT_FLOATING && channels[tck].type!=PIN_INPUT_PULLUP && channels[tck].type!=PIN_INPUT_PULLDOWN && !(channels[tck].type==PIN_IDENT_FAILED && override_unknown))
-				continue;
+			if(mode==MODE_NORMAL)
+			{
+				if(channels[tck].type!=PIN_INPUT_FLOATING && channels[tck].type!=PIN_INPUT_PULLUP && channels[tck].type!=PIN_INPUT_PULLDOWN && !(channels[tck].type==PIN_IDENT_FAILED && override_unknown))
+					continue;
+			}
 			
 			set_avr_pin_output(tck, 0);
 			
 			for(tms=0; tms<nb_channels; tms++)
 			{
+#if DEFEFCTIVE_CHANNELS
+				if(skip_defective_channels[tms])
+					continue;
+#endif
+				
 				if(tms==tck || tms==tdi)
 					continue;
 				
 				if(channels[tms].pin_occupied)
 					continue;
 				
-				if(channels[tms].type!=PIN_INPUT_FLOATING && channels[tms].type!=PIN_INPUT_PULLUP && channels[tms].type!=PIN_INPUT_PULLDOWN && !(channels[tms].type==PIN_IDENT_FAILED && override_unknown))
-					continue;
+				if(mode==MODE_NORMAL)
+				{
+					if(channels[tms].type!=PIN_INPUT_FLOATING && channels[tms].type!=PIN_INPUT_PULLUP && channels[tms].type!=PIN_INPUT_PULLDOWN && !(channels[tms].type==PIN_IDENT_FAILED && override_unknown))
+						continue;
 				
-				if(ignore_if_pullup_missing && channels[tms].type!=PIN_INPUT_PULLUP)
-					continue;
+					if(ignore_if_pullup_missing && channels[tms].type!=PIN_INPUT_PULLUP)
+						continue;
+				}
 				
 				set_avr_pin_output(tms, 1);
 				
@@ -178,11 +209,19 @@ bool find_jtag1(const bool ignore_if_pullup_missing, const bool dontstop, const 
 												
 						for(tdo=0; tdo<nb_channels; tdo++)
 						{
+#if DEFEFCTIVE_CHANNELS
+							if(skip_defective_channels[tdo])
+								continue;
+#endif
+							
 							if(tdo==tdi || tdo==tck || tdo==tms)
 								continue;
-								
-							if(channels[tdo].type!=PIN_OUTPUT_OR_VCC_GND && !override_inputs && !override_unknown)
-								continue;
+							
+							if(mode==MODE_NORMAL)
+							{
+								if(channels[tdo].type!=PIN_OUTPUT_OR_VCC_GND && !override_inputs && !override_unknown)
+									continue;
+							}
 							
 							set_avr_pin_input(tdo, tdo_pullup);
 							
@@ -559,20 +598,26 @@ void cmd_jtag1(PROTOTYPE_ARGS_HANDLER) //0-2 args
 		return;
 	}
 	
-	uint8_t ch;
-	bool found_output=false;
-	for(ch=0; ch<nb_channels; ch++)
+	devicemode_t mode=get_device_mode();
+	
+	if(mode==MODE_NORMAL)
 	{
-		if(channels[ch].type==PIN_OUTPUT_OR_VCC_GND)
+		uint8_t ch;
+		bool found_output=false;
+		for(ch=0; ch<nb_channels; ch++)
 		{
-			found_output=true;
-			break;
+			if(channels[ch].type==PIN_OUTPUT_OR_VCC_GND)
+			{
+				found_output=true;
+				break;
+			}
 		}
-	}
-	if(!found_output && !get_override_inputs())
-	{
-		printf_P(PSTR("error: no outputs on DUT detected, need at least one for TDO"));
-		return;
+		
+		if(!found_output && !get_override_inputs())
+		{
+			printf_P(PSTR("error: no outputs on DUT detected, need at least one for TDO"));
+			return;
+		}
 	}
 	
 	bool ignore_if_pullup_missing=false;
@@ -581,14 +626,21 @@ void cmd_jtag1(PROTOTYPE_ARGS_HANDLER) //0-2 args
 	char arg[SZ_BUFFER_ARGUMENTS];
 	
 	uint8_t nb=nb_args;
+	
 	while(nb--)
 	{
 		strcpy(arg, get_next_argument());
 		if(!strcmp_P(arg, PSTR("ignore")))
 		{
-			printf_P(PSTR("will ignore inputs without needed pullup\r\n"));
-			ignore_if_pullup_missing=true;
-			
+			if(mode==MODE_NORMAL)
+			{
+				printf_P(PSTR("will ignore inputs without needed pullup\r\n"));
+				ignore_if_pullup_missing=true;
+			}
+			else
+			{
+				printf_P(PSTR("warning: \"ignore\" unsupported in levelshifter mode\r\n"));
+			}
 		}
 		else if(!strcmp_P(arg, PSTR("dontstop")))
 		{
@@ -608,6 +660,12 @@ void cmd_jtag1(PROTOTYPE_ARGS_HANDLER) //0-2 args
 void cmd_jtag2(PROTOTYPE_ARGS_HANDLER) //1-2 args
 {
 	(void)cmd;
+	
+	if(get_device_mode()==MODE_LEVELSHIFTER)
+	{
+		printf_P(PSTR("error: jtag2 not yet implemented in levelshifter mode..."));
+		return;
+	}
 	
 	if(nb_channels==0)
 	{
@@ -719,6 +777,12 @@ void cmd_drlen(PROTOTYPE_ARGS_HANDLER) //0 args
 void cmd_tdo_pullup(PROTOTYPE_ARGS_HANDLER) //1 arg
 {
 	ARGS_HANDLER_UNUSED;
+	
+	if(get_device_mode()==MODE_LEVELSHIFTER)
+	{
+		printf_P(PSTR("error: command unavailable in levelshifter mode"));
+		return;
+	}
 	
 	char yesno[SZ_BUFFER_ARGUMENTS];
 	

@@ -36,6 +36,7 @@ const command_t commands[]=
 {
 	{"reset", 0, 0, &cmd_reset}, //channels.c
 	{"allinp", 0, 0, &cmd_allinp}, //avr_pinfuncs.c
+	{"devmode", 1, 1, &cmd_devmode}, //channels.c
 	{"channels", 1, 1, &cmd_channels}, //channels.c
 	{"ident", 0, 0, &cmd_ident}, //pindir_ident.c
 	{"chstate", 0, 0, &cmd_chstate}, //pindir_ident.c
